@@ -16,18 +16,11 @@ node{
         withCredentials([string(credentialsId: '17bd15d2-0821-4198-b1cb-6119e037bff4', variable: 'dockerhub_pswd')]){
         sh "docker login -u pavibabu143 -p ${dockerhub_pswd}"
     }
-        sh "docker push pavibabu143/spring-boot-mongo-docker:${buildNumber}"
-    /**
-	stage ('Deploy app in K8s cluster'){
-        kubernetesDeploy(
-            configs: 'springBootMongo.yml',
-            kubeconfigId: 'KUBERNETES_KUBE_CONFIG',
-            enableConfigSubstitution: true)
-    **/	
+	        sh "docker push pavibabu143/spring-boot-mongo-docker:${buildNumber}"
+	}		
+  
         stage('Deploy to K8s cluster'){
    sh "sed -i 's/BUILD_NUMBER/${buildNumber}/g' springBootMongo.yml" 
    sh 'kubectl apply -f springBootMongo.yml'
    }	
-    }    
-    }
-}
+    } 
