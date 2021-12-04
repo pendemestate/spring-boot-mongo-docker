@@ -1,0 +1,33 @@
+node{    
+    def buildNumber=BUILD_NUMBER
+    
+    stage('Git Clone'){
+        git credentialsId: '57ff182a-b968-41c9-943e-a63b9053b637', url: 'https://github.com/pendemestate/spring-boot-mongo-docker.git'
+    }
+    stage('maven clean build'){
+        def mavenHome=tool name: "Maven-3.6.2", type: "maven"
+        sh "${mavenHome}/bin/mvn clean package"
+    }
+    stage('build docker image'){
+        sh "docker build -t pavibabu143/spring-boot-mongo-docker:${buildNumber} ."
+        
+    }
+    stage('docker push'){
+        withCredentials([string(credentialsId: '17bd15d2-0821-4198-b1cb-6119e037bff4', variable: 'dockerhub_pswd')]){
+        sh "docker login -u pavibabu143 -p ${dockerhub_pswd}"
+    }
+        sh "docker push pavibabu143/spring-boot-mongo-docker:${buildNumber}"
+    /**
+	stage ('Deploy app in K8s cluster'){
+        kubernetesDeploy(
+            configs: 'springBootMongo.yml',
+            kubeconfigId: 'KUBERNETES_KUBE_CONFIG',
+            enableConfigSubstitution: true)
+    **/	
+        stage('Deploy to K8s cluster'){
+   sh "sed -i 's/BUILD_NUMBER/${buildNumber}/g' springBootMongo.yml" 
+   sh 'kubectl apply -f springBootMongo.yml'
+   }	
+    }    
+    }
+}
